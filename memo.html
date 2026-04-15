@@ -3,78 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research Memos</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <title>Simple Research Memos</title>
     <style>
         :root { --main-bg: #f5f5f7; --card-bg: #ffffff; --accent: #007aff; --tab-bg: #e5e5ea; --border: #d1d1d6; }
-        body { font-family: -apple-system, sans-serif; background: var(--main-bg); margin: 0; height: 100vh; display: flex; flex-direction: column; color: #333; }
+        body { font-family: -apple-system, sans-serif; background: var(--main-bg); margin: 0; height: 100vh; display: flex; flex-direction: column; color: #333; overflow: hidden; }
         
         /* 認証画面 */
         #auth-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-        input[type="password"] { padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
-        button.login-btn { margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        input[type="password"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 200px; margin-bottom: 10px; }
+        .login-btn { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         /* メインUI */
-        #main-content { display: none; flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        #main-content { display: none; flex: 1; flex-direction: column; height: 100%; }
         
-        /* タブバー（ブラウザ風） */
-        .tab-bar { display: flex; background: var(--tab-bg); padding: 10px 10px 0 10px; overflow-x: auto; border-bottom: 1px solid var(--border); }
-        .tab-bar::-webkit-scrollbar { height: 6px; }
-        .tab-bar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-        
-        .tab { display: flex; align-items: center; background: #d1d1d6; color: #555; padding: 8px 15px; margin-right: 5px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9em; user-select: none; max-width: 200px; white-space: nowrap; transition: background 0.2s; }
-        .tab.active { background: var(--card-bg); color: #000; font-weight: bold; border: 1px solid var(--border); border-bottom: none; box-shadow: 0 -2px 5px rgba(0,0,0,0.02); }
+        /* タブバー */
+        .tab-bar { display: flex; background: var(--tab-bg); padding: 8px 10px 0 10px; border-bottom: 1px solid var(--border); align-items: flex-end; }
+        .tab { display: flex; align-items: center; background: #ced0d6; color: #555; padding: 8px 12px; margin-right: 4px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9em; max-width: 180px; transition: 0.2s; border: 1px solid transparent; border-bottom: none; }
+        .tab.active { background: var(--card-bg); color: #000; font-weight: bold; border-color: var(--border); }
         .tab:hover:not(.active) { background: #c7c7cc; }
         
-        .tab-title { overflow: hidden; text-overflow: ellipsis; flex: 1; }
-        .tab-close { margin-left: 8px; width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 0.8em; color: #888; }
+        .tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .edit-title-btn { margin-left: 6px; font-size: 0.8em; opacity: 0.5; }
+        .edit-title-btn:hover { opacity: 1; }
+        .tab-close { margin-left: 8px; width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; border-radius: 50%; color: #888; transition: 0.2s; }
         .tab-close:hover { background: #ff3b30; color: white; }
         
-        .add-tab-btn { background: none; border: none; font-size: 1.2em; color: #555; cursor: pointer; padding: 0 10px; border-radius: 50%; height: 30px; align-self: center; }
-        .add-tab-btn:hover { background: #d1d1d6; }
+        .add-tab-btn { background: none; border: none; font-size: 1.5em; color: #666; cursor: pointer; padding: 0 15px; margin-bottom: 4px; }
 
-        /* エディタとプレビューのエリア */
-        .workspace { display: flex; flex: 1; overflow: hidden; background: var(--card-bg); }
-        @media (max-width: 800px) { .workspace { flex-direction: column; } }
+        /* エディタエリア */
+        .editor-container { flex: 1; display: flex; flex-direction: column; background: var(--card-bg); position: relative; }
+        .editor-header { display: flex; justify-content: space-between; padding: 5px 15px; background: #fafafa; border-bottom: 1px solid #eee; font-size: 0.8em; color: #999; }
+        #memo-input { flex: 1; width: 100%; box-sizing: border-box; resize: none; border: none; padding: 20px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 1.1em; line-height: 1.6; outline: none; background: transparent; }
         
-        .editor-pane, .preview-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .editor-pane { border-right: 1px solid var(--border); background: #fafafa; }
-        @media (max-width: 800px) { .editor-pane { border-right: none; border-bottom: 2px solid var(--accent); flex: 0.5; } .preview-pane { flex: 0.5; } }
-        
-        #memo-input { flex: 1; width: 100%; box-sizing: border-box; resize: none; border: none; background: transparent; font-family: monospace; font-size: 1em; line-height: 1.5; outline: none; }
-        #memo-preview { flex: 1; font-size: 1.05em; line-height: 1.6; word-wrap: break-word; }
-        
-        .pane-header { font-size: 0.8em; color: #888; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .sync-status { font-size: 0.8em; color: #888; }
+        .status-badge { font-weight: bold; }
+        .status-syncing { color: #ff9500; }
+        .status-saved { color: #34c759; }
+        .status-error { color: #ff3b30; }
     </style>
 </head>
 <body>
 
     <div id="auth-overlay">
         <h2>Research Memos</h2>
-        <input type="password" id="pass-input" placeholder="パスワードを入力">
-        <button class="login-btn" onclick="checkPass()">ログイン</button>
+        <input type="password" id="pass-input" placeholder="Password">
+        <button class="login-btn" onclick="checkPass()">Login</button>
     </div>
 
     <div id="main-content">
-        <div class="tab-bar" id="tab-bar">
+        <div class="tab-bar" id="tab-bar"></div>
+        <div class="editor-container">
+            <div class="editor-header">
+                <span id="active-tab-name-display">メモを選択してください</span>
+                <span id="sync-status" class="status-badge">初期化中...</span>
             </div>
-
-        <div class="workspace">
-            <div class="editor-pane">
-                <div class="pane-header">
-                    <span>📝 Edit (Markdown / KaTeX)</span>
-                    <span class="sync-status" id="sync-status">同期済み ✔</span>
-                </div>
-                <textarea id="memo-input" placeholder="ここにメモや数式 ($E=mc^2$) を入力してください..." oninput="handleInput()"></textarea>
-            </div>
-            
-            <div class="preview-pane">
-                <div class="pane-header">👁️ Preview</div>
-                <div id="memo-preview"></div>
-            </div>
+            <textarea id="memo-input" placeholder="ここに自由にメモを入力してください..." oninput="handleInput()"></textarea>
         </div>
     </div>
 
@@ -82,6 +64,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // 【重要】ToDoリストのコードからコピーしてここに貼り付けてください
         const firebaseConfig = {
             apiKey: "AIzaSyDjnlxV-O5KXmTPlNRmyYIngygjyjvWSEY",
             authDomain: "my-research-todo.firebaseapp.com",
@@ -90,15 +73,15 @@
             messagingSenderId: "23018762664",
             appId: "1:23018762664:web:7aa9046b27f18181d5ed9d"
         };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const userDocId = "my-research-memos"; // ToDoとは別のドキュメントIDを使用
+        const userDocId = "my-research-memos";
 
         window.tabs = [];
         window.activeTabId = null;
         let saveTimeout = null;
 
-        // パスワード確認（ToDoと同じ lab123）
         window.checkPass = function() {
             if (document.getElementById('pass-input').value === "lab123") { 
                 document.getElementById('auth-overlay').style.display = 'none';
@@ -107,144 +90,112 @@
             } else { alert("パスワードが違います"); }
         };
 
-        // データの読み込み
         async function loadData() {
+            const statusEl = document.getElementById('sync-status');
             try {
                 const docSnap = await getDoc(doc(db, "memo_lists", userDocId));
-                if (docSnap.exists() && docSnap.data().tabs.length > 0) { 
+                if (docSnap.exists() && docSnap.data().tabs && docSnap.data().tabs.length > 0) { 
                     window.tabs = docSnap.data().tabs;
                     window.activeTabId = docSnap.data().activeTabId || window.tabs[0].id;
                 } else {
-                    // 初回またはデータがない場合はデフォルトタブを作成
-                    createDefaultTab();
+                    const id = Date.now().toString();
+                    window.tabs = [{ id: id, title: "最初のメモ", content: "" }];
+                    window.activeTabId = id;
                 }
-                updateUI();
-            } catch (e) { console.error("Load Error:", e); createDefaultTab(); updateUI(); }
+                statusEl.innerText = "同期完了"; statusEl.className = "status-badge status-saved";
+                renderUI();
+            } catch (e) { 
+                console.error(e);
+                statusEl.innerText = "読込エラー"; statusEl.className = "status-badge status-error";
+            }
         }
 
-        // クラウドへ保存（タイピングの度に即保存すると重いため、デバウンス処理）
         window.saveToCloud = async function() {
             const statusEl = document.getElementById('sync-status');
-            statusEl.innerText = "同期中..."; statusEl.style.color = "#ff9500";
-            try { 
+            try {
                 await setDoc(doc(db, "memo_lists", userDocId), { 
                     tabs: window.tabs, 
                     activeTabId: window.activeTabId,
                     updatedAt: new Date() 
                 }); 
-                statusEl.innerText = "同期済み ✔"; statusEl.style.color = "#34c759";
+                statusEl.innerText = "保存済み"; statusEl.className = "status-badge status-saved";
             } catch (e) { 
-                console.error("Save Error:", e); 
-                statusEl.innerText = "同期エラー ✖"; statusEl.style.color = "#ff3b30";
+                console.error("Firebase Save Error:", e);
+                statusEl.innerText = "同期エラー"; statusEl.className = "status-badge status-error";
             }
         };
 
-        function createDefaultTab() {
-            const id = Date.now().toString();
-            window.tabs = [{ id: id, title: "新規メモ", content: "新しいメモです。\n数式のテスト: $\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$" }];
-            window.activeTabId = id;
-        }
-
-        // タブの追加
-        window.addTab = function() {
-            const id = Date.now().toString();
-            window.tabs.push({ id: id, title: "無題のタブ", content: "" });
-            window.activeTabId = id;
-            updateUI();
-            saveToCloud();
-            document.getElementById('memo-input').focus();
-        };
-
-        // タブの切り替え
-        window.switchTab = function(id) {
-            window.activeTabId = id;
-            updateUI();
-            saveToCloud();
-        };
-
-        // タブ名の変更（ダブルクリックで発火）
-        window.renameTab = function(id) {
-            const tab = window.tabs.find(t => t.id === id);
-            if (!tab) return;
-            const newName = prompt("タブの名前を入力してください:", tab.title);
-            if (newName !== null && newName.trim() !== "") {
-                tab.title = newName.trim();
-                renderTabs();
-                saveToCloud();
-            }
-        };
-
-        // タブの削除
-        window.deleteTab = function(event, id) {
-            event.stopPropagation(); // タブ切り替えイベントの発火を防ぐ
-            if (window.tabs.length <= 1) {
-                alert("最後のタブは削除できません。");
-                return;
-            }
-            if (confirm("このタブを削除しますか？")) {
-                window.tabs = window.tabs.filter(t => t.id !== id);
-                if (window.activeTabId === id) {
-                    window.activeTabId = window.tabs[window.tabs.length - 1].id;
-                }
-                updateUI();
-                saveToCloud();
-            }
-        };
-
-        // 入力時の処理（プレビューの即時反映 ＋ クラウド保存の遅延実行）
         window.handleInput = function() {
             const activeTab = window.tabs.find(t => t.id === window.activeTabId);
             if (activeTab) {
                 activeTab.content = document.getElementById('memo-input').value;
-                renderPreview();
+                const statusEl = document.getElementById('sync-status');
+                statusEl.innerText = "編集中..."; statusEl.className = "status-badge status-syncing";
                 
-                // タイピングが止まってから1秒後にFirebaseに保存
                 clearTimeout(saveTimeout);
-                document.getElementById('sync-status').innerText = "未保存...";
-                document.getElementById('sync-status').style.color = "#888";
                 saveTimeout = setTimeout(saveToCloud, 1000);
             }
         };
 
-        // UI全体の更新
-        function updateUI() {
-            renderTabs();
+        window.addTab = function() {
+            const id = Date.now().toString();
+            window.tabs.push({ id: id, title: "新規タブ", content: "" });
+            window.activeTabId = id;
+            renderUI();
+            saveToCloud();
+            document.getElementById('memo-input').focus();
+        };
+
+        window.switchTab = function(id) {
+            window.activeTabId = id;
+            renderUI();
+            saveToCloud(); // 最後に開いていたタブIDを保存
+        };
+
+        window.renameTab = function(event, id) {
+            event.stopPropagation();
+            const tab = window.tabs.find(t => t.id === id);
+            const newName = prompt("新しいタブ名を入力してください:", tab.title);
+            if (newName && newName.trim()) {
+                tab.title = newName.trim();
+                renderUI();
+                saveToCloud();
+            }
+        };
+
+        window.deleteTab = function(event, id) {
+            event.stopPropagation();
+            if (window.tabs.length <= 1) return alert("最後のタブは削除できません。");
+            if (confirm(`「${window.tabs.find(t=>t.id===id).title}」を削除しますか？`)) {
+                window.tabs = window.tabs.filter(t => t.id !== id);
+                if (window.activeTabId === id) window.activeTabId = window.tabs[0].id;
+                renderUI();
+                saveToCloud();
+            }
+        };
+
+        function renderUI() {
+            const tabBar = document.getElementById('tab-bar');
+            tabBar.innerHTML = "";
+            window.tabs.forEach(tab => {
+                const isActive = tab.id === window.activeTabId;
+                const tabEl = document.createElement('div');
+                tabEl.className = `tab ${isActive ? 'active' : ''}`;
+                tabEl.onclick = () => switchTab(tab.id);
+                tabEl.innerHTML = `
+                    <span class="tab-title">${tab.title}</span>
+                    <span class="edit-title-btn" onclick="renameTab(event, '${tab.id}')">✏️</span>
+                    <span class="tab-close" onclick="deleteTab(event, '${tab.id}')">×</span>
+                `;
+                tabBar.appendChild(tabEl);
+            });
+            tabBar.innerHTML += `<button class="add-tab-btn" onclick="addTab()">+</button>`;
+
             const activeTab = window.tabs.find(t => t.id === window.activeTabId);
             if (activeTab) {
                 document.getElementById('memo-input').value = activeTab.content;
-                renderPreview();
+                document.getElementById('active-tab-name-display').innerText = activeTab.title;
             }
-        }
-
-        // タブの描画
-        function renderTabs() {
-            const tabBar = document.getElementById('tab-bar');
-            tabBar.innerHTML = "";
-            
-            window.tabs.forEach(tab => {
-                const isActive = tab.id === window.activeTabId ? "active" : "";
-                tabBar.innerHTML += `
-                    <div class="tab ${isActive}" onclick="switchTab('${tab.id}')" ondblclick="renameTab('${tab.id}')" title="ダブルクリックで名前変更">
-                        <span class="tab-title">${tab.title.replace(/</g, '&lt;')}</span>
-                        <div class="tab-close" onclick="deleteTab(event, '${tab.id}')">✖</div>
-                    </div>
-                `;
-            });
-            tabBar.innerHTML += `<button class="add-tab-btn" onclick="addTab()" title="新しいタブを追加">＋</button>`;
-        }
-
-        // プレビューとKaTeXの描画処理
-        function renderPreview() {
-            const raw = document.getElementById('memo-input').value;
-            // 1. 基本的なHTMLエスケープ（XSS対策）
-            let safe = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            // 2. 改行を <br> に変換
-            safe = safe.replace(/\n/g, '<br>');
-            // 3. KaTeXの描画（$$ のブロック数式と $ のインライン数式に対応）
-            safe = safe.replace(/\$\$(.*?)\$\$/gs, (m, f) => katex.renderToString(f, { displayMode: true, throwOnError: false }));
-            safe = safe.replace(/\$(.*?)\$/g, (m, f) => katex.renderToString(f, { throwOnError: false }));
-            
-            document.getElementById('memo-preview').innerHTML = safe;
         }
     </script>
 </body>
