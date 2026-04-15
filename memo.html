@@ -176,20 +176,23 @@
 
         function renderUI() {
             const tabBar = document.getElementById('tab-bar');
-            tabBar.innerHTML = "";
+            let html = ""; // 一旦変数にHTMLをすべてまとめる
+            
             window.tabs.forEach(tab => {
                 const isActive = tab.id === window.activeTabId;
-                const tabEl = document.createElement('div');
-                tabEl.className = `tab ${isActive ? 'active' : ''}`;
-                tabEl.onclick = () => switchTab(tab.id);
-                tabEl.innerHTML = `
-                    <span class="tab-title">${tab.title}</span>
-                    <span class="edit-title-btn" onclick="renameTab(event, '${tab.id}')">✏️</span>
-                    <span class="tab-close" onclick="deleteTab(event, '${tab.id}')">×</span>
+                // onclickをHTMLタグの中に直接書き込む形式に変更
+                html += `
+                    <div class="tab ${isActive ? 'active' : ''}" onclick="switchTab('${tab.id}')">
+                        <span class="tab-title">${tab.title}</span>
+                        <span class="edit-title-btn" onclick="renameTab(event, '${tab.id}')">✏️</span>
+                        <span class="tab-close" onclick="deleteTab(event, '${tab.id}')">×</span>
+                    </div>
                 `;
-                tabBar.appendChild(tabEl);
             });
-            tabBar.innerHTML += `<button class="add-tab-btn" onclick="addTab()">+</button>`;
+            html += `<button class="add-tab-btn" onclick="addTab()">+</button>`;
+            
+            // 最後に一気に画面へ反映させる
+            tabBar.innerHTML = html;
 
             const activeTab = window.tabs.find(t => t.id === window.activeTabId);
             if (activeTab) {
