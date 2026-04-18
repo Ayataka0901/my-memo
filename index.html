@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research Memos</title>
+    <title>Research Memos Pro</title>
     <style>
         :root { --main-bg: #f5f5f7; --card-bg: #ffffff; --accent: #007aff; --tab-bg: #e5e5ea; --border: #d1d1d6; }
         body { font-family: -apple-system, sans-serif; background: var(--main-bg); margin: 0; height: 100vh; display: flex; flex-direction: column; color: #333; overflow: hidden; }
@@ -13,22 +13,35 @@
         input[type="password"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 200px; margin-bottom: 10px; }
         .login-btn { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        /* メインUI */
         #main-content { display: none; flex: 1; flex-direction: column; height: 100%; }
         
-        /* タブバー */
-        .tab-bar { display: flex; background: var(--tab-bg); padding: 8px 10px 0 10px; border-bottom: 1px solid var(--border); align-items: flex-end; }
-        .tab { display: flex; align-items: center; background: #ced0d6; color: #555; padding: 8px 12px; margin-right: 4px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9em; max-width: 180px; transition: 0.2s; border: 1px solid transparent; border-bottom: none; }
+        /* 1段目: セクションバー */
+        .section-bar { display: flex; background: #d1d1d6; padding: 8px 10px 0 10px; overflow-x: auto; align-items: flex-end; }
+        .section-bar::-webkit-scrollbar { height: 4px; }
+        .section-bar::-webkit-scrollbar-thumb { background: #aaa; border-radius: 2px; }
+        .section-tab { padding: 6px 16px; margin-right: 5px; background: #b0b0b5; color: #444; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; font-weight: bold; white-space: nowrap; }
+        .section-tab.active { background: var(--tab-bg); color: #000; }
+        .section-tab:hover:not(.active) { background: #c0c0c5; }
+        .add-section-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #555; padding: 0 10px; margin-bottom: 3px; }
+
+        /* 2段目: タブバー (あふれ対策: 案C) */
+        .tab-bar-wrapper { display: flex; background: var(--tab-bg); border-bottom: 1px solid var(--border); align-items: flex-end; }
+        .tab-bar { display: flex; padding: 8px 10px 0 10px; flex: 1; overflow-x: auto; scroll-behavior: smooth; }
+        .tab-bar::-webkit-scrollbar { height: 6px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        
+        /* タブのデザインと縮小(案C)・ドラッグ設定 */
+        .tab { display: flex; align-items: center; background: #ced0d6; color: #555; padding: 8px 12px; margin-right: 4px; border-radius: 8px 8px 0 0; cursor: grab; font-size: 0.9em; min-width: 100px; max-width: 180px; flex-shrink: 1; transition: background 0.2s; border: 1px solid transparent; border-bottom: none; user-select: none; }
         .tab.active { background: var(--card-bg); color: #000; font-weight: bold; border-color: var(--border); }
         .tab:hover:not(.active) { background: #c7c7cc; }
+        .tab.dragging { opacity: 0.4; background: #a0a0a5; } /* ドラッグ中の見た目 */
         
-        .tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-        .edit-title-btn { margin-left: 6px; font-size: 0.8em; opacity: 0.5; }
-        .edit-title-btn:hover { opacity: 1; }
-        .tab-close { margin-left: 8px; width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; border-radius: 50%; color: #888; transition: 0.2s; }
-        .tab-close:hover { background: #ff3b30; color: white; }
+        .tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; pointer-events: none; }
+        .edit-btn, .close-btn { margin-left: 6px; font-size: 0.8em; opacity: 0.5; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; }
+        .edit-btn:hover { opacity: 1; }
+        .close-btn:hover { background: #ff3b30; color: white; opacity: 1; }
         
-        .add-tab-btn { background: none; border: none; font-size: 1.5em; color: #666; cursor: pointer; padding: 0 15px; margin-bottom: 4px; }
+        .add-tab-btn { background: none; border: none; font-size: 1.5em; color: #666; cursor: pointer; padding: 0 15px; margin-bottom: 4px; flex-shrink: 0; }
 
         /* エディタエリア */
         .editor-container { flex: 1; display: flex; flex-direction: column; background: var(--card-bg); position: relative; }
@@ -44,13 +57,18 @@
 <body>
 
     <div id="auth-overlay">
-        <h2>Research Memos</h2>
+        <h2>Research Memos Pro</h2>
         <input type="password" id="pass-input" placeholder="Password">
         <button class="login-btn" onclick="checkPass()">Login</button>
     </div>
 
     <div id="main-content">
-        <div class="tab-bar" id="tab-bar"></div>
+        <div class="section-bar" id="section-bar"></div>
+        <div class="tab-bar-wrapper">
+            <div class="tab-bar" id="tab-bar"></div>
+            <button class="add-tab-btn" onclick="addTab()" title="新しいメモを追加">+</button>
+        </div>
+        
         <div class="editor-container">
             <div class="editor-header">
                 <span id="active-tab-name-display">メモを選択してください</span>
@@ -63,8 +81,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // 【重要】ToDoリストのコードからコピーしてここに貼り付けてください
+        
         const firebaseConfig = {
             apiKey: "AIzaSyDjnlxV-O5KXmTPlNRmyYIngygjyjvWSEY",
             authDomain: "my-research-todo.firebaseapp.com",
@@ -78,9 +95,12 @@
         const db = getFirestore(app);
         const userDocId = "my-research-memos";
 
+        window.sections = [];
         window.tabs = [];
+        window.activeSectionId = null;
         window.activeTabId = null;
         let saveTimeout = null;
+        let draggedTabId = null; // ドラッグ機能用
 
         window.checkPass = function() {
             if (document.getElementById('pass-input').value === "lab123") { 
@@ -94,13 +114,28 @@
             const statusEl = document.getElementById('sync-status');
             try {
                 const docSnap = await getDoc(doc(db, "memo_lists", userDocId));
-                if (docSnap.exists() && docSnap.data().tabs && docSnap.data().tabs.length > 0) { 
-                    window.tabs = docSnap.data().tabs;
-                    window.activeTabId = docSnap.data().activeTabId || window.tabs[0].id;
+                if (docSnap.exists() && docSnap.data().tabs) { 
+                    window.tabs = docSnap.data().tabs || [];
+                    
+                    // セクションの後方互換性対応（古いデータの場合）
+                    if (docSnap.data().sections) {
+                        window.sections = docSnap.data().sections;
+                        window.activeSectionId = docSnap.data().activeSectionId;
+                    } else {
+                        const defaultSecId = 'sec_' + Date.now();
+                        window.sections = [{ id: defaultSecId, title: "メイン" }];
+                        window.activeSectionId = defaultSecId;
+                        window.tabs.forEach(t => t.sectionId = defaultSecId);
+                    }
+                    window.activeTabId = docSnap.data().activeTabId;
                 } else {
-                    const id = Date.now().toString();
-                    window.tabs = [{ id: id, title: "最初のメモ", content: "" }];
-                    window.activeTabId = id;
+                    // 完全な新規ユーザーの場合
+                    const secId = 'sec_' + Date.now();
+                    window.sections = [{ id: secId, title: "メイン" }];
+                    window.activeSectionId = secId;
+                    const tabId = Date.now().toString();
+                    window.tabs = [{ id: tabId, sectionId: secId, title: "最初のメモ", content: "" }];
+                    window.activeTabId = tabId;
                 }
                 statusEl.innerText = "同期完了"; statusEl.className = "status-badge status-saved";
                 renderUI();
@@ -114,7 +149,9 @@
             const statusEl = document.getElementById('sync-status');
             try {
                 await setDoc(doc(db, "memo_lists", userDocId), { 
+                    sections: window.sections,
                     tabs: window.tabs, 
+                    activeSectionId: window.activeSectionId,
                     activeTabId: window.activeTabId,
                     updatedAt: new Date() 
                 }); 
@@ -125,79 +162,152 @@
             }
         };
 
+        // ====== ドラッグ＆ドロップ（入れ替え）処理 ======
+        window.handleDragStart = function(e, id) {
+            draggedTabId = id;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        };
+        window.handleDragOver = function(e) {
+            e.preventDefault(); // ドロップを許可
+            e.dataTransfer.dropEffect = 'move';
+        };
+        window.handleDrop = function(e, targetId) {
+            e.preventDefault();
+            e.target.closest('.tab').classList.remove('dragging');
+            if (draggedTabId === targetId || !draggedTabId) return;
+
+            // タブの並び替え
+            const oldIndex = window.tabs.findIndex(t => t.id === draggedTabId);
+            const newIndex = window.tabs.findIndex(t => t.id === targetId);
+            const [movedTab] = window.tabs.splice(oldIndex, 1);
+            window.tabs.splice(newIndex, 0, movedTab);
+
+            renderUI();
+            saveToCloud();
+        };
+        window.handleDragEnd = function(e) {
+            e.target.classList.remove('dragging');
+            draggedTabId = null;
+        };
+
+        // ====== 入力・操作系 ======
         window.handleInput = function() {
             const activeTab = window.tabs.find(t => t.id === window.activeTabId);
             if (activeTab) {
                 activeTab.content = document.getElementById('memo-input').value;
-                const statusEl = document.getElementById('sync-status');
-                statusEl.innerText = "編集中..."; statusEl.className = "status-badge status-syncing";
-                
+                document.getElementById('sync-status').innerText = "編集中..."; 
+                document.getElementById('sync-status').className = "status-badge status-syncing";
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(saveToCloud, 1000);
             }
         };
 
+        // セクション操作
+        window.addSection = function() {
+            const name = prompt("新しいセクション名を入力してください:", "新セクション");
+            if (name && name.trim()) {
+                const id = 'sec_' + Date.now();
+                window.sections.push({ id, title: name.trim() });
+                window.activeSectionId = id;
+                
+                // 新しいセクションには空のタブを1つ作る
+                const tabId = Date.now().toString();
+                window.tabs.push({ id: tabId, sectionId: id, title: "新規メモ", content: "" });
+                window.activeTabId = tabId;
+                
+                renderUI(); saveToCloud();
+            }
+        };
+        window.switchSection = function(id) {
+            window.activeSectionId = id;
+            // セクションを切り替えたら、そのセクション内の最初のタブをアクティブにする
+            const sectionTabs = window.tabs.filter(t => t.sectionId === id);
+            window.activeTabId = sectionTabs.length > 0 ? sectionTabs[0].id : null;
+            renderUI(); saveToCloud();
+        };
+
+        // タブ操作
         window.addTab = function() {
+            if (!window.activeSectionId) return alert("先にセクションを作成してください。");
             const id = Date.now().toString();
-            window.tabs.push({ id: id, title: "新規タブ", content: "" });
+            window.tabs.push({ id, sectionId: window.activeSectionId, title: "新規メモ", content: "" });
             window.activeTabId = id;
-            renderUI();
-            saveToCloud();
+            renderUI(); saveToCloud();
             document.getElementById('memo-input').focus();
         };
-
         window.switchTab = function(id) {
             window.activeTabId = id;
-            renderUI();
-            saveToCloud(); // 最後に開いていたタブIDを保存
+            renderUI(); saveToCloud();
         };
-
         window.renameTab = function(event, id) {
             event.stopPropagation();
             const tab = window.tabs.find(t => t.id === id);
-            const newName = prompt("新しいタブ名を入力してください:", tab.title);
-            if (newName && newName.trim()) {
-                tab.title = newName.trim();
-                renderUI();
-                saveToCloud();
-            }
+            const newName = prompt("タブ名を入力:", tab.title);
+            if (newName && newName.trim()) { tab.title = newName.trim(); renderUI(); saveToCloud(); }
         };
-
         window.deleteTab = function(event, id) {
             event.stopPropagation();
-            if (window.tabs.length <= 1) return alert("最後のタブは削除できません。");
-            if (confirm(`「${window.tabs.find(t=>t.id===id).title}」を削除しますか？`)) {
+            const tab = window.tabs.find(t => t.id === id);
+            const sectionTabs = window.tabs.filter(t => t.sectionId === tab.sectionId);
+            if (sectionTabs.length <= 1) return alert("セクション内の最後のタブは削除できません。");
+            
+            if (confirm(`「${tab.title}」を削除しますか？`)) {
                 window.tabs = window.tabs.filter(t => t.id !== id);
-                if (window.activeTabId === id) window.activeTabId = window.tabs[0].id;
-                renderUI();
-                saveToCloud();
+                if (window.activeTabId === id) {
+                    const remaining = window.tabs.filter(t => t.sectionId === tab.sectionId);
+                    window.activeTabId = remaining[0].id;
+                }
+                renderUI(); saveToCloud();
             }
         };
 
         function renderUI() {
-            const tabBar = document.getElementById('tab-bar');
-            let html = ""; // 一旦変数にHTMLをすべてまとめる
+            // セクションの描画
+            const secBar = document.getElementById('section-bar');
+            let secHtml = "";
+            window.sections.forEach(sec => {
+                const isActive = sec.id === window.activeSectionId;
+                secHtml += `<div class="section-tab ${isActive ? 'active' : ''}" onclick="switchSection('${sec.id}')">${sec.title}</div>`;
+            });
+            secHtml += `<button class="add-section-btn" onclick="addSection()">+</button>`;
+            secBar.innerHTML = secHtml;
+
+            // 現在のセクションに属するタブのみ抽出
+            const currentTabs = window.tabs.filter(t => t.sectionId === window.activeSectionId);
             
-            window.tabs.forEach(tab => {
+            // タブの描画（ドラッグ属性付き）
+            const tabBar = document.getElementById('tab-bar');
+            let tabHtml = "";
+            currentTabs.forEach(tab => {
                 const isActive = tab.id === window.activeTabId;
-                // onclickをHTMLタグの中に直接書き込む形式に変更
-                html += `
-                    <div class="tab ${isActive ? 'active' : ''}" onclick="switchTab('${tab.id}')">
+                tabHtml += `
+                    <div class="tab ${isActive ? 'active' : ''}" 
+                         onclick="switchTab('${tab.id}')"
+                         draggable="true" 
+                         ondragstart="handleDragStart(event, '${tab.id}')" 
+                         ondragover="handleDragOver(event)" 
+                         ondrop="handleDrop(event, '${tab.id}')" 
+                         ondragend="handleDragEnd(event)">
                         <span class="tab-title">${tab.title}</span>
-                        <span class="edit-title-btn" onclick="renameTab(event, '${tab.id}')">✏️</span>
-                        <span class="tab-close" onclick="deleteTab(event, '${tab.id}')">×</span>
+                        <span class="edit-btn" title="名前変更" onclick="renameTab(event, '${tab.id}')">✏️</span>
+                        <span class="close-btn" title="削除" onclick="deleteTab(event, '${tab.id}')">×</span>
                     </div>
                 `;
             });
-            html += `<button class="add-tab-btn" onclick="addTab()">+</button>`;
-            
-            // 最後に一気に画面へ反映させる
-            tabBar.innerHTML = html;
+            tabBar.innerHTML = tabHtml;
 
+            // テキストエリアの更新
             const activeTab = window.tabs.find(t => t.id === window.activeTabId);
+            const inputEl = document.getElementById('memo-input');
             if (activeTab) {
-                document.getElementById('memo-input').value = activeTab.content;
+                inputEl.value = activeTab.content;
+                inputEl.disabled = false;
                 document.getElementById('active-tab-name-display').innerText = activeTab.title;
+            } else {
+                inputEl.value = "";
+                inputEl.disabled = true;
+                document.getElementById('active-tab-name-display').innerText = "メモがありません";
             }
         }
     </script>
